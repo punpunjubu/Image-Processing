@@ -1,0 +1,17 @@
+im = imread('black_and_white.tif');
+patch1 = roipoly(im);
+noise_hist = imhist(im(patch1));
+noise_stat = statmoments(noise_hist, 2);
+approx_noise = imnoise(zeros(size(im)),'gaussian',0, noise_stat(2)); 
+Svv = abs(fft2(approx_noise)) .^ 2;
+threshRGB = multithresh(im,7);
+value = [0 threshRGB(2:end) 255];
+quantRGB = imquantize(im, threshRGB, value);
+h = fspecial('gaussian',[5 5], 8);
+f_hat = imfilter(im, h);
+% figure(1); imshow(f_hat);
+Sff = abs(fft2(double(f_hat))) .^ 2;
+R = Svv ./ Sff;
+PSF = fspecial('motion', 180, 0); 
+im_out = deconvwnr(im, PSF, R);
+figure(2); imshow(im_out);
